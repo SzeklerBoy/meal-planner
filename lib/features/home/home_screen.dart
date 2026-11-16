@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:meal_planner/core/theme.dart';
+import 'package:meal_planner/features/recipe_details/recipe_details_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -22,12 +23,64 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 14),
                     const _ProgressCard(),
                     const SizedBox(height: 16),
-                    const _MealPlaceholder(
-                      imagePath: 'assets/images/meal_1.jpg',
+                    _MealPlaceholder(
+                      recipe: Recipe(
+                        imagePath: 'assets/images/meal_1.jpg',
+                        title: 'Chicken Skewers',
+                        mealType: 'Lunch',
+                        duration: '15 mins',
+                        energy: '100',
+                        protein: '15',
+                        carbs: '58',
+                        fat: '20',
+                        servings: 2,
+                        ingredients: [
+                          RecipeIngredient(
+                            name: 'Chicken breasts',
+                            amount: '250 g',
+                          ),
+                          RecipeIngredient(
+                            name: 'Unsalted butter',
+                            amount: '1 tbsp',
+                          ),
+                          RecipeIngredient(
+                            name: 'Sesame or vegetable oil',
+                            amount: '2 tsp',
+                          ),
+                          RecipeIngredient(
+                            name: 'Fresh ginger',
+                            amount: '2 tsp',
+                          ),
+                          RecipeIngredient(name: 'Large eggs', amount: '100 g'),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    const _MealPlaceholder(
-                      imagePath: 'assets/images/meal_2.jpg',
+                    _MealPlaceholder(
+                      recipe: Recipe(
+                        imagePath: 'assets/images/meal_2.jpg',
+                        title: 'Sesame Chicken',
+                        mealType: 'Dinner',
+                        duration: '20 mins',
+                        energy: '420',
+                        protein: '32',
+                        carbs: '28',
+                        fat: '18',
+                        servings: 2,
+                        ingredients: [
+                          RecipeIngredient(
+                            name: 'Chicken thighs',
+                            amount: '300 g',
+                          ),
+                          RecipeIngredient(
+                            name: 'Sesame seeds',
+                            amount: '1 tbsp',
+                          ),
+                          RecipeIngredient(name: 'Spinach', amount: '100 g'),
+                          RecipeIngredient(name: 'Carrot', amount: '1 medium'),
+                          RecipeIngredient(name: 'Lemon', amount: '1/2'),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -270,9 +323,9 @@ class _RingPainter extends CustomPainter {
 }
 
 class _MealPlaceholder extends StatelessWidget {
-  const _MealPlaceholder({required this.imagePath});
+  const _MealPlaceholder({required this.recipe});
 
-  final String imagePath;
+  final Recipe recipe;
 
   @override
   Widget build(BuildContext context) {
@@ -280,9 +333,22 @@ class _MealPlaceholder extends StatelessWidget {
       builder: (context, constraints) {
         final height = (constraints.maxWidth * 0.45).clamp(140.0, 180.0);
 
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(7),
-          child: Image.asset(imagePath, height: height, fit: BoxFit.cover),
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => RecipeDetailsScreen(recipe: recipe),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(7),
+            child: Image.asset(
+              recipe.imagePath,
+              height: height,
+              fit: BoxFit.cover,
+            ),
+          ),
         );
       },
     );
