@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meal_planner/core/theme.dart';
 import 'package:meal_planner/shared/recipes/domain/recipe.dart';
+import 'package:meal_planner/shared/widgets/favorite_button.dart';
 import 'package:meal_planner/shared/widgets/recipe_image.dart';
 
 class RecipeCard extends StatelessWidget {
@@ -26,9 +27,18 @@ class RecipeCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(7),
-                child: RecipeImage(recipe.imageUrl, height: imageHeight),
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(7),
+                    child: RecipeImage(recipe.imageUrl, height: imageHeight),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: FavoriteButton(recipeId: recipe.id),
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               Text(

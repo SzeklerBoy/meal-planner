@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meal_planner/core/theme.dart';
+import 'package:meal_planner/features/favorites/favorites_screen.dart';
 import 'package:meal_planner/features/recipe_details/recipe_details_screen.dart';
 import 'package:meal_planner/shared/recipes/domain/recipe.dart';
 import 'package:meal_planner/shared/recipes/providers/recipes_provider.dart';
@@ -137,8 +138,11 @@ class _TopBar extends StatelessWidget {
           child: const Icon(Icons.person, size: 18, color: Colors.white),
         ),
         IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.menu, size: 25),
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const FavoritesScreen())),
+          tooltip: 'Favorites',
+          icon: const Icon(Icons.favorite_border, size: 25),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints.tightFor(width: 30, height: 30),
           splashRadius: 18,

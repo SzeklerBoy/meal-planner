@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meal_planner/core/theme.dart';
 import 'package:meal_planner/shared/recipes/domain/recipe.dart';
+import 'package:meal_planner/shared/widgets/favorite_button.dart';
 import 'package:meal_planner/shared/widgets/recipe_image.dart';
 
 class RecipeDetailsScreen extends StatelessWidget {
@@ -56,7 +57,7 @@ class _RecipeHero extends StatelessWidget {
                   icon: Icons.arrow_back,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                const _HeroButton(icon: Icons.more_horiz),
+                FavoriteButton(recipeId: recipe.id),
               ],
             ),
           ),
