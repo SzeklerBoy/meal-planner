@@ -3,7 +3,7 @@
 /// The data layer turns technical exceptions (e.g. `DioException`,
 /// `FormatException`) into one of these, so the UI only has to show
 /// [message] and never deals with HTTP or parsing details.
-sealed class Failure {
+sealed class Failure implements Exception {
   const Failure();
 
   String get message;
