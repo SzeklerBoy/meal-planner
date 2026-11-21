@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:meal_planner/core/error/failure.dart';
 import 'package:meal_planner/core/theme.dart';
 import 'package:meal_planner/shared/favorites/favorites_provider.dart';
 
@@ -23,7 +24,17 @@ class FavoriteButton extends ConsumerWidget {
         shape: BoxShape.circle,
       ),
       child: IconButton(
-        onPressed: () => ref.read(favoritesProvider.notifier).toggle(recipeId),
+        onPressed: () async {
+          try {
+            await ref.read(favoritesProvider.notifier).toggle(recipeId);
+          } on Failure catch (failure) {
+            // The heart is already rolled back; just tell the user.
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(failure.message)));
+          }
+        },
         tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints.tightFor(width: 34, height: 34),

@@ -28,7 +28,10 @@ class FavoritesScreen extends ConsumerWidget {
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(
           message: failureMessage(error),
-          onRetry: () => ref.invalidate(recipesProvider),
+          onRetry: () {
+            ref.invalidate(favoritesProvider);
+            ref.invalidate(recipesProvider);
+          },
         ),
         data: (recipes) {
           if (recipes.isEmpty) {

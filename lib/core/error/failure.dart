@@ -41,6 +41,16 @@ final class ParsingFailure extends Failure {
   String get message => 'We received unexpected data. Please try again later.';
 }
 
+/// Reading or writing local storage (e.g. favorites) failed.
+final class StorageFailure extends Failure {
+  const StorageFailure([this.error]);
+
+  final Object? error;
+
+  @override
+  String get message => "We couldn't save your favorites. Please try again.";
+}
+
 final class UnknownFailure extends Failure {
   const UnknownFailure([this.error]);
 
