@@ -11,6 +11,7 @@ class AppColors {
   static const Color proteinColor = Color(0xFF3585FE);
   static const Color fatColor = Color(0xFFFEC635);
   static const Color motivationalBackgroundColor = Color(0xFFF3F3F3);
+  static const Color favoriteColor = Color(0xFFE53935);
 
   static const TextStyle footerTextStyle = TextStyle(
     fontFamily: 'SF Pro Display',

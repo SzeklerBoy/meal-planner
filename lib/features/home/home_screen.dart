@@ -1,86 +1,76 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meal_planner/core/theme.dart';
+import 'package:meal_planner/features/favorites/favorites_screen.dart';
 import 'package:meal_planner/features/recipe_details/recipe_details_screen.dart';
+import 'package:meal_planner/shared/recipes/domain/recipe.dart';
+import 'package:meal_planner/shared/recipes/providers/recipes_provider.dart';
+import 'package:meal_planner/shared/widgets/recipe_card.dart';
+import 'package:meal_planner/shared/widgets/state_views.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recipesAsync = ref.watch(recipesProvider);
+    void retry() => ref.invalidate(recipesProvider);
+
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _TopBar(),
-                    const SizedBox(height: 14),
-                    const _ProgressCard(),
-                    const SizedBox(height: 16),
-                    _MealPlaceholder(
-                      recipe: Recipe(
-                        imagePath: 'assets/images/meal_1.jpg',
-                        title: 'Chicken Skewers',
-                        mealType: 'Lunch',
-                        duration: '15 mins',
-                        energy: '100',
-                        protein: '15',
-                        carbs: '58',
-                        fat: '20',
-                        servings: 2,
-                        ingredients: [
-                          RecipeIngredient(
-                            name: 'Chicken breasts',
-                            amount: '250 g',
-                          ),
-                          RecipeIngredient(
-                            name: 'Unsalted butter',
-                            amount: '1 tbsp',
-                          ),
-                          RecipeIngredient(
-                            name: 'Sesame or vegetable oil',
-                            amount: '2 tsp',
-                          ),
-                          RecipeIngredient(
-                            name: 'Fresh ginger',
-                            amount: '2 tsp',
-                          ),
-                          RecipeIngredient(name: 'Large eggs', amount: '100 g'),
-                        ],
+              child: RefreshIndicator(
+                color: AppColors.primaryColor,
+                onRefresh: () => ref.refresh(recipesProvider.future),
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    const SliverPadding(
+                      padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _TopBar(),
+                            SizedBox(height: 14),
+                            _ProgressCard(),
+                            SizedBox(height: 16),
+                            Text(
+                              'Recipes',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _MealPlaceholder(
-                      recipe: Recipe(
-                        imagePath: 'assets/images/meal_2.jpg',
-                        title: 'Sesame Chicken',
-                        mealType: 'Dinner',
-                        duration: '20 mins',
-                        energy: '420',
-                        protein: '32',
-                        carbs: '28',
-                        fat: '18',
-                        servings: 2,
-                        ingredients: [
-                          RecipeIngredient(
-                            name: 'Chicken thighs',
-                            amount: '300 g',
+                    ...recipesAsync.when(
+                      loading: () => [_fill(const LoadingView())],
+                      error: (error, _) => [
+                        _fill(
+                          ErrorView(
+                            message: failureMessage(error),
+                            onRetry: retry,
                           ),
-                          RecipeIngredient(
-                            name: 'Sesame seeds',
-                            amount: '1 tbsp',
-                          ),
-                          RecipeIngredient(name: 'Spinach', amount: '100 g'),
-                          RecipeIngredient(name: 'Carrot', amount: '1 medium'),
-                          RecipeIngredient(name: 'Lemon', amount: '1/2'),
-                        ],
-                      ),
+                        ),
+                      ],
+                      data: (recipes) => recipes.isEmpty
+                          ? [
+                              _fill(
+                                EmptyView(
+                                  message: 'No recipes found.',
+                                  action: RetryButton(onPressed: retry),
+                                ),
+                              ),
+                            ]
+                          : [_RecipeList(recipes: recipes)],
                     ),
                   ],
                 ),
@@ -89,6 +79,38 @@ class HomeScreen extends StatelessWidget {
             const _BottomNavigation(),
           ],
         ),
+      ),
+    );
+  }
+
+  static Widget _fill(Widget child) {
+    return SliverFillRemaining(hasScrollBody: false, child: child);
+  }
+}
+
+class _RecipeList extends StatelessWidget {
+  const _RecipeList({required this.recipes});
+
+  final List<Recipe> recipes;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      sliver: SliverList.separated(
+        itemCount: recipes.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final recipe = recipes[index];
+          return RecipeCard(
+            recipe: recipe,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => RecipeDetailsScreen(recipe: recipe),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -116,8 +138,11 @@ class _TopBar extends StatelessWidget {
           child: const Icon(Icons.person, size: 18, color: Colors.white),
         ),
         IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.menu, size: 25),
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const FavoritesScreen())),
+          tooltip: 'Favorites',
+          icon: const Icon(Icons.favorite_border, size: 25),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints.tightFor(width: 30, height: 30),
           splashRadius: 18,
@@ -320,39 +345,6 @@ class _RingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _RingPainter oldDelegate) =>
       oldDelegate.value != value;
-}
-
-class _MealPlaceholder extends StatelessWidget {
-  const _MealPlaceholder({required this.recipe});
-
-  final Recipe recipe;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final height = (constraints.maxWidth * 0.45).clamp(140.0, 180.0);
-
-        return GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => RecipeDetailsScreen(recipe: recipe),
-              ),
-            );
-          },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(7),
-            child: Image.asset(
-              recipe.imagePath,
-              height: height,
-              fit: BoxFit.cover,
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class _BottomNavigation extends StatelessWidget {

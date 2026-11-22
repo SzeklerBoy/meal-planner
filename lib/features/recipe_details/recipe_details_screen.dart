@@ -1,38 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:meal_planner/core/theme.dart';
-
-class Recipe {
-  const Recipe({
-    required this.imagePath,
-    required this.title,
-    required this.mealType,
-    required this.duration,
-    required this.energy,
-    required this.protein,
-    required this.carbs,
-    required this.fat,
-    required this.servings,
-    required this.ingredients,
-  });
-
-  final String imagePath;
-  final String title;
-  final String mealType;
-  final String duration;
-  final String energy;
-  final String protein;
-  final String carbs;
-  final String fat;
-  final int servings;
-  final List<RecipeIngredient> ingredients;
-}
-
-class RecipeIngredient {
-  const RecipeIngredient({required this.name, required this.amount});
-
-  final String name;
-  final String amount;
-}
+import 'package:meal_planner/shared/recipes/domain/recipe.dart';
+import 'package:meal_planner/shared/widgets/favorite_button.dart';
+import 'package:meal_planner/shared/widgets/recipe_image.dart';
 
 class RecipeDetailsScreen extends StatelessWidget {
   const RecipeDetailsScreen({required this.recipe, super.key});
@@ -75,7 +45,7 @@ class _RecipeHero extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(recipe.imagePath, fit: BoxFit.cover),
+          RecipeImage(recipe.imageUrl, fit: BoxFit.cover),
           Positioned(
             top: 12,
             left: 18,
@@ -87,7 +57,7 @@ class _RecipeHero extends StatelessWidget {
                   icon: Icons.arrow_back,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                const _HeroButton(icon: Icons.more_horiz),
+                FavoriteButton(recipeId: recipe.id),
               ],
             ),
           ),
@@ -149,7 +119,7 @@ class _RecipeSheet extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          recipe.title,
+                          recipe.name,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.textColor,
@@ -163,7 +133,10 @@ class _RecipeSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${recipe.mealType} / ${recipe.duration}',
+                    [
+                      recipe.category,
+                      if (recipe.area != null) recipe.area!,
+                    ].join(' / '),
                     style: const TextStyle(
                       color: AppColors.mutedTextColor,
                       fontSize: 11,
@@ -174,6 +147,7 @@ class _RecipeSheet extends StatelessWidget {
             ),
             _NutritionSummary(recipe: recipe),
             _IngredientsSection(recipe: recipe),
+            _InstructionsSection(recipe: recipe),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 18),
               child: SizedBox(
@@ -210,11 +184,12 @@ class _NutritionSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final calories = recipe.calories;
     final values = [
-      ('${recipe.energy} kcal', 'Energy'),
-      ('${recipe.protein} g', 'Protein'),
-      ('${recipe.carbs} g', 'Carbs'),
-      ('${recipe.fat} g', 'Fat'),
+      (calories == null ? 'Not available' : '$calories kcal', 'Energy'),
+      (recipe.category, 'Category'),
+      (recipe.area ?? '–', 'Cuisine'),
+      ('${recipe.ingredients.length}', 'Ingredients'),
     ];
 
     return Container(
@@ -253,20 +228,15 @@ class _NutritionSummary extends StatelessWidget {
   }
 }
 
-class _IngredientsSection extends StatefulWidget {
+class _IngredientsSection extends StatelessWidget {
   const _IngredientsSection({required this.recipe});
 
   final Recipe recipe;
 
   @override
-  State<_IngredientsSection> createState() => _IngredientsSectionState();
-}
-
-class _IngredientsSectionState extends State<_IngredientsSection> {
-  late int servings = widget.recipe.servings;
-
-  @override
   Widget build(BuildContext context) {
+    final count = recipe.ingredients.length;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
       child: Column(
@@ -274,38 +244,19 @@ class _IngredientsSectionState extends State<_IngredientsSection> {
         children: [
           Row(
             children: [
-              const Text(
-                'Ingredients',
-                style: TextStyle(
-                  color: AppColors.textColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              const _SectionTitle('Ingredients'),
               const SizedBox(width: 8),
               Text(
-                '$servings servings',
+                '$count ${count == 1 ? 'ingredient' : 'ingredients'}',
                 style: const TextStyle(
                   color: AppColors.mutedTextColor,
                   fontSize: 10,
                 ),
               ),
-              const Spacer(),
-              _ServingButton(
-                icon: Icons.remove,
-                onPressed: servings > 1
-                    ? () => setState(() => servings--)
-                    : null,
-              ),
-              Container(width: 1, height: 20, color: AppColors.mutedTextColor),
-              _ServingButton(
-                icon: Icons.add,
-                onPressed: () => setState(() => servings++),
-              ),
             ],
           ),
           const SizedBox(height: 12),
-          ...widget.recipe.ingredients.map(
+          ...recipe.ingredients.map(
             (ingredient) => Padding(
               padding: const EdgeInsets.only(bottom: 11),
               child: Row(
@@ -320,7 +271,7 @@ class _IngredientsSectionState extends State<_IngredientsSection> {
                     ),
                   ),
                   Text(
-                    ingredient.amount,
+                    ingredient.measure ?? '',
                     style: const TextStyle(
                       color: AppColors.mutedTextColor,
                       fontSize: 12,
@@ -336,22 +287,47 @@ class _IngredientsSectionState extends State<_IngredientsSection> {
   }
 }
 
-class _ServingButton extends StatelessWidget {
-  const _ServingButton({required this.icon, this.onPressed});
+class _InstructionsSection extends StatelessWidget {
+  const _InstructionsSection({required this.recipe});
 
-  final IconData icon;
-  final VoidCallback? onPressed;
+  final Recipe recipe;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 27,
-      height: 20,
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 15),
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints.tightFor(width: 27, height: 20),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _SectionTitle('Instructions'),
+          const SizedBox(height: 8),
+          Text(
+            recipe.instructions ?? 'No instructions available.',
+            style: const TextStyle(
+              color: AppColors.textColor,
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.textColor,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
       ),
     );
   }

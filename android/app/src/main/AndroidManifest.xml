@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required to load recipes from TheMealDB in release builds. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="meal_planner"
         android:name="${applicationName}"
